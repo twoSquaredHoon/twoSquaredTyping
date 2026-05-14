@@ -5,7 +5,6 @@ import SwiftUI
 struct AnimatedGIFView: NSViewRepresentable {
     let url: URL
 
-    /// open gif
     func makeNSView(context: Context) -> NSImageView {
         let imageView = NSImageView()
         imageView.imageScaling = .scaleNone
@@ -15,7 +14,6 @@ struct AnimatedGIFView: NSViewRepresentable {
         return imageView
     }
 
-    /// new gif open
     func updateNSView(_ imageView: NSImageView, context: Context) {
         imageView.animates = true
         imageView.image = NSImage(contentsOf: url)

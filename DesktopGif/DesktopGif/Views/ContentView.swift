@@ -4,6 +4,8 @@ import SwiftUI
 
 struct ContentView: View {
     @EnvironmentObject private var appModel: AppModel
+
+    @State private var selectedMode: DisplayMode?
     @State private var gifURL: URL?
     @State private var gifContentSize: CGSize?
     @State private var windowConfigured = false
@@ -18,23 +20,16 @@ struct ContentView: View {
                 Text("Could not read this GIF.")
                     .padding(16)
                     .frame(minWidth: 240, minHeight: 120)
+            } else if selectedMode != nil {
+                GifPickerView(onSelectGif: pickGIF)
             } else {
-                VStack(spacing: 12) {
-                    Text("Choose a GIF")
-                        .font(.headline)
-                    Button("Select GIF…") { pickGIF() }
-                        .keyboardShortcut("o", modifiers: [.command])
+                ModeSelectionView {
+                    selectedMode = .widget
                 }
-                .padding(24)
-                .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(Color.black.opacity(0.75))
-                )
-                .frame(minWidth: 280, minHeight: 160)
             }
         }
         // Transparent SwiftUI views do not hit-test by default; without this, the window
-        // never receives drags for `isMovableByWindowBackground`.
+        // does not receive mouse drags reliably for `WindowDragController`.
         .contentShape(Rectangle())
         .background(WindowAccessor { window in
             if desktopWindow !== window {
@@ -56,7 +51,9 @@ struct ContentView: View {
             desktopWindow?.ignoresMouseEvents = on
         }
         .onReceive(appModel.openGIFPublisher) { _ in
-            pickGIF()
+            if selectedMode != nil {
+                pickGIF()
+            }
         }
     }
 

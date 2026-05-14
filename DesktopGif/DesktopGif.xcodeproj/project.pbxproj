@@ -13,6 +13,9 @@
 		A10000010000000000000004 /* WindowAccessor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000004 /* WindowAccessor.swift */; };
 		A10000010000000000000005 /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000005 /* AppModel.swift */; };
 		A10000010000000000000006 /* WindowDragController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000006 /* WindowDragController.swift */; };
+		A10000010000000000000007 /* DisplayMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000007 /* DisplayMode.swift */; };
+		A10000010000000000000008 /* ModeSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000008 /* ModeSelectionView.swift */; };
+		A10000010000000000000009 /* GifPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000009 /* GifPickerView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -23,6 +26,10 @@
 		A20000010000000000000004 /* WindowAccessor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowAccessor.swift; sourceTree = "<group>"; };
 		A20000010000000000000005 /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
 		A20000010000000000000006 /* WindowDragController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowDragController.swift; sourceTree = "<group>"; };
+		A20000010000000000000007 /* DisplayMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DisplayMode.swift; sourceTree = "<group>"; };
+		A20000010000000000000008 /* ModeSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModeSelectionView.swift; sourceTree = "<group>"; };
+		A20000010000000000000009 /* GifPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GifPickerView.swift; sourceTree = "<group>"; };
+		A20000010000000000000010 /* .gitkeep */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitkeep; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -47,14 +54,58 @@
 		A50000010000000000000002 /* DesktopGif */ = {
 			isa = PBXGroup;
 			children = (
-				A20000010000000000000001 /* DesktopGifApp.swift */,
-				A20000010000000000000002 /* ContentView.swift */,
-				A20000010000000000000003 /* AnimatedGIFView.swift */,
-				A20000010000000000000004 /* WindowAccessor.swift */,
-				A20000010000000000000005 /* AppModel.swift */,
-				A20000010000000000000006 /* WindowDragController.swift */,
+				A50100010000000000000001 /* App */,
+				A50100010000000000000002 /* Models */,
+				A50100010000000000000003 /* Views */,
+				A50100010000000000000004 /* Windows */,
+				A50100010000000000000005 /* Resources */,
 			);
 			path = DesktopGif;
+			sourceTree = "<group>";
+		};
+		A50100010000000000000001 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				A20000010000000000000001 /* DesktopGifApp.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		A50100010000000000000002 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				A20000010000000000000005 /* AppModel.swift */,
+				A20000010000000000000007 /* DisplayMode.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		A50100010000000000000003 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				A20000010000000000000002 /* ContentView.swift */,
+				A20000010000000000000003 /* AnimatedGIFView.swift */,
+				A20000010000000000000008 /* ModeSelectionView.swift */,
+				A20000010000000000000009 /* GifPickerView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		A50100010000000000000004 /* Windows */ = {
+			isa = PBXGroup;
+			children = (
+				A20000010000000000000004 /* WindowAccessor.swift */,
+				A20000010000000000000006 /* WindowDragController.swift */,
+			);
+			path = Windows;
+			sourceTree = "<group>";
+		};
+		A50100010000000000000005 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				A20000010000000000000010 /* .gitkeep */,
+			);
+			path = Resources;
 			sourceTree = "<group>";
 		};
 		A50000010000000000000003 /* Products */ = {
@@ -123,6 +174,9 @@
 				A10000010000000000000004 /* WindowAccessor.swift in Sources */,
 				A10000010000000000000005 /* AppModel.swift in Sources */,
 				A10000010000000000000006 /* WindowDragController.swift in Sources */,
+				A10000010000000000000007 /* DisplayMode.swift in Sources */,
+				A10000010000000000000008 /* ModeSelectionView.swift in Sources */,
+				A10000010000000000000009 /* GifPickerView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
