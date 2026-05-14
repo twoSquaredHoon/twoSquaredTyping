@@ -26,7 +26,10 @@ struct ContentView: View {
                         .keyboardShortcut("o", modifiers: [.command])
                 }
                 .padding(24)
-                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color.black.opacity(0.75))
+                )
                 .frame(minWidth: 280, minHeight: 160)
             }
         }
@@ -34,11 +37,10 @@ struct ContentView: View {
         // never receives drags for `isMovableByWindowBackground`.
         .contentShape(Rectangle())
         .background(WindowAccessor { window in
-            desktopWindow = window
-            guard !windowConfigured else {
-                window.ignoresMouseEvents = appModel.clickThrough
-                return
+            if desktopWindow !== window {
+                desktopWindow = window
             }
+            guard !windowConfigured else { return }
             configureDesktopWindow(window)
             window.ignoresMouseEvents = appModel.clickThrough
             windowConfigured = true
@@ -55,11 +57,6 @@ struct ContentView: View {
         }
         .onReceive(appModel.openGIFPublisher) { _ in
             pickGIF()
-        }
-        .onAppear {
-            if gifURL == nil {
-                pickGIF()
-            }
         }
     }
 
@@ -109,7 +106,9 @@ struct ContentView: View {
         window.level = NSWindow.Level(rawValue: iconLevel + 1)
 
         window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
-        window.isMovableByWindowBackground = true
+        // `WindowDragController` moves the window; leaving `isMovableByWindowBackground`
+        // true can let AppKit try the same drag and cause jitter.
+        window.isMovableByWindowBackground = false
         WindowDragController.shared.attach(to: window)
         window.standardWindowButton(.closeButton)?.isHidden = true
         window.standardWindowButton(.miniaturizeButton)?.isHidden = true

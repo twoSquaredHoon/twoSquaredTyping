@@ -1,8 +1,8 @@
 import AppKit
 
 /// SwiftUI’s `NSHostingView` usually answers `mouseDownCanMoveWindow` with `false`, so
-/// `isMovableByWindowBackground` never runs. This moves the borderless window explicitly
-/// while still returning every event so controls keep working.
+/// borderless windows do not move from the background. This controller moves the window
+/// explicitly. Keep `isMovableByWindowBackground` false so AppKit does not compete with it.
 final class WindowDragController {
     static let shared = WindowDragController()
 
