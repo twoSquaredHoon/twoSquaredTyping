@@ -16,6 +16,8 @@
 		A10000010000000000000007 /* DisplayMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000007 /* DisplayMode.swift */; };
 		A10000010000000000000008 /* ModeSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000008 /* ModeSelectionView.swift */; };
 		A10000010000000000000009 /* GifPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000009 /* GifPickerView.swift */; };
+		A10000010000000000000010 /* GlobalKeyEventTap.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000011 /* GlobalKeyEventTap.swift */; };
+		A10000010000000000000011 /* InteractionLockOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000012 /* InteractionLockOverlay.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -30,6 +32,8 @@
 		A20000010000000000000008 /* ModeSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModeSelectionView.swift; sourceTree = "<group>"; };
 		A20000010000000000000009 /* GifPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GifPickerView.swift; sourceTree = "<group>"; };
 		A20000010000000000000010 /* .gitkeep */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitkeep; sourceTree = "<group>"; };
+		A20000010000000000000011 /* GlobalKeyEventTap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlobalKeyEventTap.swift; sourceTree = "<group>"; };
+		A20000010000000000000012 /* InteractionLockOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InteractionLockOverlay.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -75,6 +79,7 @@
 			isa = PBXGroup;
 			children = (
 				A20000010000000000000005 /* AppModel.swift */,
+				A20000010000000000000011 /* GlobalKeyEventTap.swift */,
 				A20000010000000000000007 /* DisplayMode.swift */,
 			);
 			path = Models;
@@ -87,6 +92,7 @@
 				A20000010000000000000003 /* AnimatedGIFView.swift */,
 				A20000010000000000000008 /* ModeSelectionView.swift */,
 				A20000010000000000000009 /* GifPickerView.swift */,
+				A20000010000000000000012 /* InteractionLockOverlay.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -177,6 +183,8 @@
 				A10000010000000000000007 /* DisplayMode.swift in Sources */,
 				A10000010000000000000008 /* ModeSelectionView.swift in Sources */,
 				A10000010000000000000009 /* GifPickerView.swift in Sources */,
+				A10000010000000000000010 /* GlobalKeyEventTap.swift in Sources */,
+				A10000010000000000000011 /* InteractionLockOverlay.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -227,6 +235,7 @@
 				ENABLE_PREVIEWS = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = DesktopGif;
+				INFOPLIST_KEY_NSInputMonitoringUsageDescription = "DesktopGif listens for key events (with your permission) to speed up GIF playback during typing bursts.";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -251,6 +260,7 @@
 				ENABLE_PREVIEWS = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = DesktopGif;
+				INFOPLIST_KEY_NSInputMonitoringUsageDescription = "DesktopGif listens for key events (with your permission) to speed up GIF playback during typing bursts.";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",

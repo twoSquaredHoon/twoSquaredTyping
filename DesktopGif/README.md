@@ -57,6 +57,13 @@ If decoding succeeds, the window **resizes to the GIF’s logical size** and **`
 - **Drag** anywhere on the content to move the window (handled by **`WindowDragController`**, not a title bar).
 - **Desktop → Pass clicks through** (**⌘⌥T**): when on, mouse events pass through the window; use the menu again to interact with the window.
 
+### Typing burst (GIF speed)
+
+**`AppModel`** installs a **local** `keyDown` monitor (keys while DesktopGif is focused) and a **global** monitor (keys in **other** apps) after macOS grants **Listen Event** / **Input Monitoring** permission. A timer smooths **`playbackSpeedMultiplier`** toward **3×** while you type and back to **1×** after a short idle. **`AnimatedGIFView`** uses ImageIO frame timing with delay ÷ multiplier.
+
+- Approve the system prompt if shown, then ensure **DesktopGif** is enabled under **System Settings → Privacy & Security → Input Monitoring** so **global** detection works when you type in Safari, Notes, etc.
+- Use menu **Typing → Refresh global key monitor** after changing permissions, or **Typing → Open Input Monitoring settings…**.
+
 If the file cannot be read, you see **“Could not read this GIF.”**
 
 ---
@@ -83,9 +90,9 @@ Swift sources are grouped under **`DesktopGif/DesktopGif/`**:
 
 | Folder | Files | Responsibility |
 |--------|--------|------------------|
-| **`App/`** | `DesktopGifApp.swift` | `@main`, `WindowGroup`, menu commands (**File**, **Desktop**). |
-| **`Models/`** | `AppModel.swift`, `DisplayMode.swift` | Shared observable state; display mode enum. |
-| **`Views/`** | `ContentView.swift`, `ModeSelectionView.swift`, `GifPickerView.swift`, `AnimatedGIFView.swift` | Routing UI, mode and GIF screens, `NSImageView` bridge for animation. |
+| **`App/`** | `DesktopGifApp.swift` | `@main`, `WindowGroup`, menus (**File**, **Desktop**, **Typing**). |
+| **`Models/`** | `AppModel.swift`, `DisplayMode.swift` | Shared state; **typing burst** monitors + **`playbackSpeedMultiplier`**; display mode enum. |
+| **`Views/`** | `ContentView.swift`, `ModeSelectionView.swift`, `GifPickerView.swift`, `AnimatedGIFView.swift` | Routing UI; GIF playback via ImageIO + speed multiplier. |
 | **`Windows/`** | `WindowAccessor.swift`, `WindowDragController.swift` | Attach to `NSWindow`; event-monitor-based dragging for borderless windows. |
 | **`Resources/`** | `.gitkeep` | Placeholder for assets (e.g. asset catalogs, localized strings) — add files here as the app grows. |
 

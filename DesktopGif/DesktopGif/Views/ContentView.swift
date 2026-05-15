@@ -10,12 +10,18 @@ struct ContentView: View {
     @State private var gifContentSize: CGSize?
     @State private var windowConfigured = false
     @State private var desktopWindow: NSWindow?
+    @State private var pointerInControlZone = false
+    @State private var requiresZoneExitBeforeHold = false
+    @State private var globalMouseMonitor: Any?
+    @State private var leaveZoneWorkItem: DispatchWorkItem?
+
+    private let controlHotSize: CGFloat = 72
+    private let leaveZoneDelay: TimeInterval = 0.2
 
     var body: some View {
         Group {
             if let gifURL, let gifContentSize {
-                AnimatedGIFView(url: gifURL)
-                    .frame(width: gifContentSize.width, height: gifContentSize.height)
+                desktopGIFStage(url: gifURL, size: gifContentSize)
             } else if gifURL != nil {
                 Text("Could not read this GIF.")
                     .padding(16)
@@ -28,8 +34,6 @@ struct ContentView: View {
                 }
             }
         }
-        // Transparent SwiftUI views do not hit-test by default; without this, the window
-        // does not receive mouse drags reliably for `WindowDragController`.
         .contentShape(Rectangle())
         .background(WindowAccessor { window in
             if desktopWindow !== window {
@@ -41,20 +45,47 @@ struct ContentView: View {
             windowConfigured = true
             syncWindowSizeToGIF(window: window)
         })
-        .onChange(of: desktopWindow) { _, window in
-            syncWindowSizeToGIF(window: window)
+        .onChange(of: desktopWindow) { _, _ in
+            syncWindowSizeToGIF(window: desktopWindow)
+            refreshGlobalMouseMonitor()
+        }
+        .onChange(of: gifURL) { _, _ in
+            refreshGlobalMouseMonitor()
         }
         .onChange(of: gifContentSize) { _, _ in
             syncWindowSizeToGIF(window: desktopWindow)
         }
-        .onReceive(appModel.$clickThrough) { on in
-            desktopWindow?.ignoresMouseEvents = on
+        .onChange(of: appModel.clickThrough) { _, _ in
+            syncMousePassthrough()
+            refreshGlobalMouseMonitor()
+        }
+        .onChange(of: pointerInControlZone) { _, _ in
+            syncMousePassthrough()
         }
         .onReceive(appModel.openGIFPublisher) { _ in
             if selectedMode != nil {
                 pickGIF()
             }
         }
+        .onDisappear {
+            stopGlobalMouseMonitor()
+        }
+    }
+
+    @ViewBuilder
+    private func desktopGIFStage(url: URL, size: CGSize) -> some View {
+        ZStack(alignment: .topTrailing) {
+            AnimatedGIFView(appModel: appModel, url: url)
+                .frame(width: size.width, height: size.height)
+                .allowsHitTesting(!appModel.clickThrough)
+
+            InteractionLockOverlay(
+                pointerInZone: $pointerInControlZone,
+                requiresZoneExit: $requiresZoneExitBeforeHold
+            )
+            .frame(width: size.width, height: size.height, alignment: .topTrailing)
+        }
+        .frame(width: size.width, height: size.height)
     }
 
     private func pickGIF() {
@@ -81,6 +112,7 @@ struct ContentView: View {
         gifContentSize = size
         gifURL = url
         syncWindowSizeToGIF(window: desktopWindow)
+        refreshGlobalMouseMonitor()
     }
 
     private func syncWindowSizeToGIF(window: NSWindow?) {
@@ -96,19 +128,86 @@ struct ContentView: View {
         window.backgroundColor = .clear
         window.hasShadow = false
 
-        // Slightly *above* `.desktopIconWindow` so Finder’s desktop layer does not eat
-        // every mouse event; you can drag the window and use controls. (Level −1 looks
-        // “under” the desktop but is not interactive.)
         let iconLevel = Int(CGWindowLevelForKey(.desktopIconWindow))
         window.level = NSWindow.Level(rawValue: iconLevel + 1)
 
         window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
-        // `WindowDragController` moves the window; leaving `isMovableByWindowBackground`
-        // true can let AppKit try the same drag and cause jitter.
         window.isMovableByWindowBackground = false
-        WindowDragController.shared.attach(to: window)
+        WindowDragController.shared.attach(to: window) {
+            appModel.clickThrough == false
+        }
         window.standardWindowButton(.closeButton)?.isHidden = true
         window.standardWindowButton(.miniaturizeButton)?.isHidden = true
         window.standardWindowButton(.zoomButton)?.isHidden = true
+    }
+
+    private func refreshGlobalMouseMonitor() {
+        let shouldTrack = gifURL != nil
+            && gifContentSize != nil
+            && appModel.clickThrough
+
+        if shouldTrack {
+            startGlobalMouseMonitorIfNeeded()
+        } else {
+            stopGlobalMouseMonitor()
+            syncMousePassthrough()
+        }
+    }
+
+    private func startGlobalMouseMonitorIfNeeded() {
+        guard globalMouseMonitor == nil else { return }
+        globalMouseMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.mouseMoved]) { _ in
+            DispatchQueue.main.async {
+                evaluatePointerNearControls()
+            }
+        }
+        evaluatePointerNearControls()
+    }
+
+    private func stopGlobalMouseMonitor() {
+        if let globalMouseMonitor {
+            NSEvent.removeMonitor(globalMouseMonitor)
+        }
+        globalMouseMonitor = nil
+    }
+
+    private func evaluatePointerNearControls() {
+        guard appModel.clickThrough, let window = desktopWindow else { return }
+        let near = interactionControlHotRect(for: window).contains(NSEvent.mouseLocation)
+        setPointerInControlZone(near)
+    }
+
+    private func interactionControlHotRect(for window: NSWindow) -> NSRect {
+        let frame = window.frame
+        return NSRect(
+            x: frame.maxX - controlHotSize,
+            y: frame.maxY - controlHotSize,
+            width: controlHotSize,
+            height: controlHotSize
+        )
+    }
+
+    private func setPointerInControlZone(_ inZone: Bool) {
+        leaveZoneWorkItem?.cancel()
+        if inZone {
+            guard !requiresZoneExitBeforeHold else { return }
+            pointerInControlZone = true
+            return
+        }
+        requiresZoneExitBeforeHold = false
+        let work = DispatchWorkItem {
+            pointerInControlZone = false
+        }
+        leaveZoneWorkItem = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + leaveZoneDelay, execute: work)
+    }
+
+    private func syncMousePassthrough() {
+        guard let window = desktopWindow else { return }
+        if appModel.clickThrough {
+            window.ignoresMouseEvents = !pointerInControlZone
+        } else {
+            window.ignoresMouseEvents = false
+        }
     }
 }

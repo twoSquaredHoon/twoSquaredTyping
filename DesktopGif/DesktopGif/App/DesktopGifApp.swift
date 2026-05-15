@@ -17,15 +17,13 @@ struct DesktopGifApp: App {
                 }
                 .keyboardShortcut("o", modifiers: .command)
             }
-            CommandMenu("Desktop") {
-                Toggle(
-                    "Pass clicks through",
-                    isOn: Binding(
-                        get: { appModel.clickThrough },
-                        set: { appModel.clickThrough = $0 }
-                    )
-                )
-                .keyboardShortcut("t", modifiers: [.command, .option])
+            CommandMenu("Typing") {
+                Button("Refresh typing detection") {
+                    appModel.refreshTypingMonitors()
+                }
+                Button("Open Input Monitoring settings…") {
+                    appModel.openInputMonitoringPrivacySettings()
+                }
             }
         }
     }

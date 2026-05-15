@@ -9,16 +9,21 @@ final class WindowDragController {
     private var monitor: Any?
     private var willCloseObserver: NSObjectProtocol?
     private weak var window: NSWindow?
+    private var canDrag: (() -> Bool)?
 
     private var downScreen: NSPoint?
     private var frameOriginAtDown: NSPoint?
 
     private init() {}
 
-    func attach(to window: NSWindow) {
-        if self.window === window, monitor != nil { return }
+    func attach(to window: NSWindow, canDrag: @escaping () -> Bool = { true }) {
+        if self.window === window, monitor != nil {
+            self.canDrag = canDrag
+            return
+        }
         detach()
         self.window = window
+        self.canDrag = canDrag
 
         willCloseObserver = NotificationCenter.default.addObserver(
             forName: NSWindow.willCloseNotification,
@@ -44,6 +49,7 @@ final class WindowDragController {
         }
         willCloseObserver = nil
         window = nil
+        canDrag = nil
         downScreen = nil
         frameOriginAtDown = nil
     }
@@ -51,6 +57,7 @@ final class WindowDragController {
     private func handle(_ event: NSEvent) {
         guard let window else { return }
         guard event.window === window else { return }
+        guard canDrag?() ?? true else { return }
         guard !window.ignoresMouseEvents else { return }
 
         switch event.type {
