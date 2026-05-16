@@ -8,7 +8,7 @@ struct ContentView: View {
     @State private var selectedMode: DisplayMode?
     @State private var gifURL: URL?
     @State private var gifContentSize: CGSize?
-    @State private var windowConfigured = false
+    @State private var didPerformBaseWindowSetup = false
     @State private var desktopWindow: NSWindow?
     @State private var pointerInControlZone = false
     @State private var requiresZoneExitBeforeHold = false
@@ -29,9 +29,10 @@ struct ContentView: View {
             } else if selectedMode != nil {
                 GifPickerView(onSelectGif: pickGIF)
             } else {
-                ModeSelectionView {
-                    selectedMode = .widget
-                }
+                ModeSelectionView(
+                    onSelectWidget: { selectedMode = .widget },
+                    onSelectOverlay: { selectedMode = .overlay }
+                )
             }
         }
         .contentShape(Rectangle())
@@ -39,10 +40,12 @@ struct ContentView: View {
             if desktopWindow !== window {
                 desktopWindow = window
             }
-            guard !windowConfigured else { return }
-            configureDesktopWindow(window)
-            window.ignoresMouseEvents = appModel.clickThrough
-            windowConfigured = true
+            if !didPerformBaseWindowSetup {
+                performBaseWindowSetup(window)
+                didPerformBaseWindowSetup = true
+            }
+            applyDisplayMode(to: window, mode: resolvedDisplayModeForWindow())
+            syncMousePassthrough()
             syncWindowSizeToGIF(window: window)
         })
         .onChange(of: desktopWindow) { _, _ in
@@ -54,6 +57,12 @@ struct ContentView: View {
         }
         .onChange(of: gifContentSize) { _, _ in
             syncWindowSizeToGIF(window: desktopWindow)
+        }
+        .onChange(of: selectedMode) { _, _ in
+            if let window = desktopWindow {
+                applyDisplayMode(to: window, mode: resolvedDisplayModeForWindow())
+                window.orderFrontRegardless()
+            }
         }
         .onChange(of: appModel.clickThrough) { _, _ in
             syncMousePassthrough()
@@ -120,18 +129,19 @@ struct ContentView: View {
         window.setContentSize(NSSize(width: size.width, height: size.height))
     }
 
-    private func configureDesktopWindow(_ window: NSWindow) {
+    /// Until the user picks a mode, match the historical default (desktop sticker layer) for the mode picker UI.
+    private func resolvedDisplayModeForWindow() -> DisplayMode {
+        selectedMode ?? .widget
+    }
+
+    /// Borderless transparent shell shared by all display modes (level / Spaces behavior varies).
+    private func performBaseWindowSetup(_ window: NSWindow) {
         window.styleMask = [.borderless, .fullSizeContentView]
         window.titlebarAppearsTransparent = true
         window.titleVisibility = .hidden
         window.isOpaque = false
         window.backgroundColor = .clear
         window.hasShadow = false
-
-        let iconLevel = Int(CGWindowLevelForKey(.desktopIconWindow))
-        window.level = NSWindow.Level(rawValue: iconLevel + 1)
-
-        window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
         window.isMovableByWindowBackground = false
         WindowDragController.shared.attach(to: window) {
             appModel.clickThrough == false
@@ -139,6 +149,20 @@ struct ContentView: View {
         window.standardWindowButton(.closeButton)?.isHidden = true
         window.standardWindowButton(.miniaturizeButton)?.isHidden = true
         window.standardWindowButton(.zoomButton)?.isHidden = true
+    }
+
+    private func applyDisplayMode(to window: NSWindow, mode: DisplayMode) {
+        switch mode {
+        case .widget:
+            let iconLevel = Int(CGWindowLevelForKey(.desktopIconWindow))
+            window.level = NSWindow.Level(rawValue: iconLevel + 1)
+            window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
+            window.hidesOnDeactivate = false
+        case .overlay:
+            window.level = .floating
+            window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
+            window.hidesOnDeactivate = false
+        }
     }
 
     private func refreshGlobalMouseMonitor() {

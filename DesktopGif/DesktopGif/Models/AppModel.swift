@@ -9,13 +9,17 @@ final class AppModel: ObservableObject {
     /// Smoothed playback multiplier for the GIF (1 = normal, up to `burstSpeed` during typing bursts).
     @Published private(set) var playbackSpeedMultiplier: Double = 1.0
 
-    /// `true` when the listen-only **CGEvent** session tap is installed (system-wide keyDown path).
+    /// `true` when the listen-only **CGEvent** session tap is installed (pairs with Listen Events / session tap TCC).
     @Published private(set) var globalSessionTapActive = false
+
+    /// `true` when **`NSEvent.addGlobalMonitorForEvents(.keyDown)`** is installed (pairs with **Input Monitoring**; required for many third-party apps).
+    @Published private(set) var globalKeyDownMonitorActive = false
 
     /// Raised when the user chooses **File → Open…** (or ⌘O) so the window can show a panel even if clicks pass through the window.
     let openGIFPublisher = PassthroughSubject<Void, Never>()
 
     private var globalKeyTap: GlobalKeyEventTap?
+    private var globalKeyDownMonitor: Any?
     private var localKeyMonitor: Any?
     private var typingBurstTimer: Timer?
     private var lastKeyPressAt: Date?
@@ -40,14 +44,14 @@ final class AppModel: ObservableObject {
             object: nil,
             queue: .main
         ) { [weak self] _ in
-            self?.installGlobalSessionTap()
+            self?.installGlobalKeyboardObservers()
         }
 
         requestListenEventAccessIfNeeded()
 
         DispatchQueue.main.async { [weak self] in
-            self?.installGlobalSessionTap()
-            self?.scheduleSessionTapRetry()
+            self?.installGlobalKeyboardObservers()
+            self?.scheduleGlobalKeyboardObserverRetry()
         }
     }
 
@@ -57,6 +61,10 @@ final class AppModel: ObservableObject {
         }
         globalKeyTap?.stop()
         globalKeyTap = nil
+        if let globalKeyDownMonitor {
+            NSEvent.removeMonitor(globalKeyDownMonitor)
+        }
+        globalKeyDownMonitor = nil
         if let localKeyMonitor {
             NSEvent.removeMonitor(localKeyMonitor)
         }
@@ -72,19 +80,28 @@ final class AppModel: ObservableObject {
         clickThrough = enabled
     }
 
-    /// Call after enabling **Input Monitoring** for DesktopGif in System Settings.
+    /// Call after enabling **Input Monitoring** and/or **Listen Events** for DesktopGif in System Settings.
     func refreshTypingMonitors() {
         requestListenEventAccessIfNeeded()
-        installGlobalSessionTap()
-        scheduleSessionTapRetry()
+        installGlobalKeyboardObservers()
+        scheduleGlobalKeyboardObserverRetry()
     }
 
     func openInputMonitoringPrivacySettings() {
-        guard let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ListenEvent") else { return }
-        NSWorkspace.shared.open(url)
+        if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ListenEvent") {
+            NSWorkspace.shared.open(url)
+        }
+        if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_InputMonitoring") {
+            NSWorkspace.shared.open(url)
+        }
     }
 
-    private func installGlobalSessionTap() {
+    private func installGlobalKeyboardObservers() {
+        installListenOnlyCGEventTap()
+        installNSEventGlobalKeyDownMonitor()
+    }
+
+    private func installListenOnlyCGEventTap() {
         globalKeyTap?.stop()
         globalKeyTap = nil
 
@@ -98,10 +115,22 @@ final class AppModel: ObservableObject {
         globalSessionTapActive = ok
     }
 
-    private func scheduleSessionTapRetry() {
+    /// Observes **keyDown** in other apps when **Input Monitoring** is granted. Complements the listen-only CGEvent tap (which alone often misses editors/terminals).
+    private func installNSEventGlobalKeyDownMonitor() {
+        if let globalKeyDownMonitor {
+            NSEvent.removeMonitor(globalKeyDownMonitor)
+            self.globalKeyDownMonitor = nil
+        }
+        globalKeyDownMonitor = NSEvent.addGlobalMonitorForEvents(matching: .keyDown) { [weak self] _ in
+            self?.handleKeyDown()
+        }
+        globalKeyDownMonitorActive = globalKeyDownMonitor != nil
+    }
+
+    private func scheduleGlobalKeyboardObserverRetry() {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) { [weak self] in
             self?.requestListenEventAccessIfNeeded()
-            self?.installGlobalSessionTap()
+            self?.installGlobalKeyboardObservers()
         }
     }
 

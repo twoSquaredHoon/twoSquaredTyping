@@ -33,15 +33,12 @@ Nothing runs automatically at launch (no file dialog on startup).
 
 ### Step 1 — Choose display mode
 
-**`ModeSelectionView`** shows **“Choose display mode”** with three rows:
+**`ModeSelectionView`** shows **“Choose display mode”** with two rows:
 
 | Control | Behavior |
 |---------|----------|
-| **Widget Mode** | Active (prominent). Tap to go to **Step 2**. |
-| **Window Mode** | Disabled placeholder + TODO copy. Does **not** navigate. |
-| **Overlay Mode** | Same as Window Mode — placeholder only. |
-
-Only **Widget Mode** is wired today.
+| **Widget Mode** | Desktop sticker: level just above the desktop icon layer. Tap to go to **Step 2**. |
+| **Overlay Mode** | Floating above normal windows. Tap to go to **Step 2**. |
 
 ### Step 2 — Choose a GIF
 
@@ -79,8 +76,7 @@ If the file cannot be read, you see **“Could not read this GIF.”**
 
 ## Current behavior (limitations)
 
-- **`DisplayMode.window`** and **`.overlay`** exist in the model but **do not** change window level, chrome, or stacking yet. All successful runs use the **same** configuration as today’s “desktop sticker”: borderless, transparent, level **just above** Finder’s desktop icon layer, with **`ContentView.configureDesktopWindow(_:)`**.
-- **`selectedMode`** is set to **`.widget`** when you proceed from Step 1, reserved for future per-mode behavior.
+- **`DisplayMode`** is **`.widget`** or **`.overlay`**; **`ContentView.applyDisplayMode(_:mode:)`** sets window level and `collectionBehavior` (desktop layer vs floating). Borderless transparent chrome is shared for both.
 
 ---
 
@@ -96,7 +92,7 @@ Swift sources are grouped under **`DesktopGif/DesktopGif/`**:
 | **`Windows/`** | `WindowAccessor.swift`, `WindowDragController.swift` | Attach to `NSWindow`; event-monitor-based dragging for borderless windows. |
 | **`Resources/`** | `.gitkeep` | Placeholder for assets (e.g. asset catalogs, localized strings) — add files here as the app grows. |
 
-**Coordinator:** **`ContentView`** owns **`pickGIF()`**, **`adoptGIF(at:)`**, **`syncWindowSizeToGIF(window:)`**, and **`configureDesktopWindow(_:)`**. **`GifPickerView`** only invokes a closure; it does not present **`NSOpenPanel`** itself.
+**Coordinator:** **`ContentView`** owns **`pickGIF()`**, **`adoptGIF(at:)`**, **`syncWindowSizeToGIF(window:)`**, **`performBaseWindowSetup(_:)`**, and **`applyDisplayMode(_:mode:)`**. **`GifPickerView`** only invokes a closure; it does not present **`NSOpenPanel`** itself.
 
 ---
 
